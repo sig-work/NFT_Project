@@ -19,9 +19,8 @@ projectId = "18942"
 #   Before the images are uploaded, A check will be done where all the images will be listed.    
 #   /UploadNFT will then be called, uploading each one indvidually.  
 #
-# TODO: Decide how to input folder location
-# TODO: Confirm with the user with a list before uploading the files.
-#  
+# TODO: Get a file to easily change apiKey and projectId
+# TODO: Add a layer of interpreation around the responses to uploads to give a clear indication of what was successful and what was not.
 
 def main():
     # Get the directory specified
@@ -41,13 +40,14 @@ def main():
     uploadFiles(directory)
 
 def getDirectory():
-    # Reads from command line arguments and gets the directory provided.
-    # Handles errors:
-    #   Error when directory doesnt exist
-    #   Error when directory does not have any pngs in it.
-    #   Error when given no arguemtns
-    #   Error when given too many arguements
-    #____________________________________________________________________
+    '''
+    Reads from command line arguments, gets and validates the directory provided.
+    Handles errors:
+      Error when directory doesnt exist
+      Error when directory does not have any pngs in it.
+      Error when given no arguemtns
+      Error when given too many arguements
+    '''
 
     arguments = sys.argv
 
@@ -80,11 +80,12 @@ def getDirectory():
     return path
 
 def checkToUploadFiles(directory):
-    # Loops throug all files looking for png files. When it finds them,
-    # the program also tries to find an associated .jSon file with the same name
-    # 
-    # Prints out these files to let the user check that all files are inteded to be uploaded.
-    #___________________________________________________________________________________
+    '''
+     Loops throug all files looking for png files. When it finds them,
+     the program also tries to find an associated .jSon file with the same name
+     
+     Prints out these files to let the user check that all files are inteded to be uploaded.
+    '''
     # TODO: Remove extra path & json variables if they are not used.
 
     print("Files exposed for uploading: ")
@@ -112,7 +113,11 @@ def checkToUploadFiles(directory):
         return False
     
 def uploadFiles(directory):
-
+    """
+    Uploads all the files in a given directory to the NFT_Maker servers.
+    The given directory is scanned for .png and matching .json files and
+    then callUploadNFT() is called on each pair.
+    """
     # Loop through each png in the folder
     fileCount = 0
     for entry in os.scandir(directory):
@@ -137,10 +142,15 @@ def uploadFiles(directory):
                 callUploadNFT(b64ImageEncode, imageMetaData, fileCount)
         
 def callUploadNFT(imageAsBase64, imageMetaData, fileCount):
+    """
+    Makes an html request to https://api.nft-maker.io/UploadNft.
+    This uploads the given base64 encoded file and image metaData
+    """
 
     global apiKey
     global projectId
     
+    # The data given through the html requiest
     uploadPayload ={
             "assetName": f"ManageNFT{fileCount}",
             "previewImageNft": {
@@ -151,23 +161,16 @@ def callUploadNFT(imageAsBase64, imageMetaData, fileCount):
                 ]
             }
             }
+
+    # Make the request
     url = fr"https://api.nft-maker.io/UploadNft/{apiKey}/{projectId}"
-    testurl = f"https://api.nft-maker.io/ListProjects/{apiKey}"
-    #           https://api.nft-maker.io/ListProjects/e37deceb9d334ceaa1033ee7b0027a75
     head = {"Content-Type":"application/json", "Accept":"application/json"}
     response = requests.post(url, json=uploadPayload, headers=head)
+
+    # Print response.
     print(f"Response:\n{response}\n")
     print(f"Response text:\n{response.text}\n")
     print(f"Response raw:\n{response.raw}\n")
-    print(imageMetaData)
-
-# from flask import Flask
-
-# app = Flask(__name__)
-
-# @app.route('/')
-# def uploadNFTs():
-#     return 'uploading all the nfts'
 
 if __name__ == "__main__":
     main()
